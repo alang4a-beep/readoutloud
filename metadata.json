@@ -1,0 +1,6 @@
+{
+  "name": "文字朗讀助手",
+  "description": "具備語意斷句與變速功能的智能文字朗讀工具，提供字詞高亮跟讀體驗。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
