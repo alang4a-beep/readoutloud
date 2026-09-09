@@ -12,6 +12,8 @@ export default function App() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   // Chrome ~15s TTS pause bug workaround
   const keepAliveInterval = useRef<number | null>(null);
 
@@ -115,9 +117,18 @@ export default function App() {
       return;
     }
 
-    setCurrentIndex(0);
+    let startIndex = 0;
+    if (textareaRef.current && textareaRef.current.selectionStart !== undefined) {
+      startIndex = textareaRef.current.selectionStart;
+      // If the cursor is at the very end of the text, start from the beginning instead
+      if (startIndex >= text.length) {
+        startIndex = 0;
+      }
+    }
+
+    setCurrentIndex(startIndex);
     setCurrentLength(0);
-    startPlayback(0, speed);
+    startPlayback(startIndex, speed);
   };
 
   const handlePause = () => {
@@ -149,9 +160,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans text-stone-900 selection:bg-amber-200">
+    <div className="h-screen bg-stone-50 font-sans text-stone-900 selection:bg-amber-200 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between z-10 shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
             <Volume2 className="w-5 h-5" />
@@ -183,8 +194,8 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col h-[65vh] min-h-[400px]">
+      <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 flex flex-col min-h-0">
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col flex-1">
           
           {/* Content Area */}
           <div className="flex-1 relative overflow-hidden flex flex-col">
@@ -198,10 +209,11 @@ export default function App() {
                   className="absolute inset-0 flex flex-col"
                 >
                   <textarea
+                    ref={textareaRef}
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="請在此貼上或輸入您想要朗讀的文字..."
-                    className="flex-1 w-full p-8 text-lg leading-relaxed text-stone-700 bg-transparent resize-none focus:outline-none placeholder:text-stone-300"
+                    placeholder="請在此貼上或輸入您想要朗讀的文字...（點擊文字任意處放置游標，朗讀將從該處開始）"
+                    className="flex-1 w-full p-6 sm:p-10 text-lg sm:text-xl leading-relaxed text-stone-700 bg-transparent resize-none focus:outline-none placeholder:text-stone-300"
                   />
                 </motion.div>
               ) : (
@@ -210,9 +222,9 @@ export default function App() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute inset-0 overflow-y-auto p-8"
+                  className="absolute inset-0 overflow-y-auto p-6 sm:p-10"
                 >
-                  <div className="text-xl leading-loose text-stone-600 whitespace-pre-wrap font-medium select-none">
+                  <div className="text-xl sm:text-2xl leading-loose text-stone-600 whitespace-pre-wrap font-medium select-none">
                     {text.split('').map((char, index) => {
                       const isHighlighted = index >= currentIndex && index < currentIndex + Math.max(currentLength, 1);
                       return (
@@ -236,7 +248,7 @@ export default function App() {
           </div>
 
           {/* Bottom Toolbar */}
-          <div className="p-4 sm:p-6 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 sm:p-6 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center justify-between gap-4 shrink-0">
             
             {/* Mobile Speed Controls */}
             <div className="flex sm:hidden items-center gap-1 bg-white p-1 rounded-lg border border-stone-200">
@@ -317,7 +329,7 @@ export default function App() {
         </div>
         
         {/* Info text */}
-        <p className="text-center text-stone-400 text-sm mt-6">
+        <p className="text-center text-stone-400 text-xs sm:text-sm mt-4 shrink-0">
           系統會根據作業系統內建的語音引擎與神經網路模型，自動分析標點與語義，產生自然流暢的語調與斷句。
         </p>
       </main>
