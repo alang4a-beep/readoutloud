@@ -7,6 +7,7 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
+  const [fontSize, setFontSize] = useState<number>(1.25); // base size in rem (20px)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentLength, setCurrentLength] = useState(0);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -144,7 +145,7 @@ export default function App() {
     setCurrentLength(0);
   };
 
-  const speedOptions = [1, 1.5, 2, 3];
+  const speedOptions = [0.75, 1, 1.5, 2, 3];
 
   const handleSpeedChange = (newSpeed: number) => {
     setSpeed(newSpeed);
@@ -152,6 +153,9 @@ export default function App() {
       startPlayback(currentIndex, newSpeed);
     }
   };
+
+  const handleZoomIn = () => setFontSize(prev => Math.min(prev + 0.25, 3));
+  const handleZoomOut = () => setFontSize(prev => Math.max(prev - 0.25, 0.875));
 
   const handleJumpTo = (index: number) => {
     setCurrentIndex(index);
@@ -173,23 +177,46 @@ export default function App() {
           </div>
         </div>
         
-        {/* Speed Controls */}
-        <div className="hidden sm:flex items-center gap-2 bg-stone-100 p-1.5 rounded-lg border border-stone-200">
-          <Settings2 className="w-4 h-4 text-stone-400 ml-2" />
-          <div className="w-px h-4 bg-stone-300 mx-1"></div>
-          {speedOptions.map((s) => (
+        <div className="hidden sm:flex items-center gap-2">
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 bg-stone-100 p-1.5 rounded-lg border border-stone-200">
             <button
-              key={s}
-              onClick={() => handleSpeedChange(s)}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
-                speed === s 
-                  ? 'bg-white text-amber-700 shadow-sm' 
-                  : 'text-stone-600 hover:bg-stone-200'
-              }`}
+              onClick={handleZoomOut}
+              disabled={fontSize <= 0.875}
+              className="px-2 py-1 text-sm font-medium text-stone-600 hover:bg-stone-200 rounded-md transition-all disabled:opacity-50"
+              title="縮小文字"
             >
-              {s}x
+              A-
             </button>
-          ))}
+            <div className="w-px h-4 bg-stone-300 mx-1"></div>
+            <button
+              onClick={handleZoomIn}
+              disabled={fontSize >= 3}
+              className="px-2 py-1 text-sm font-medium text-stone-600 hover:bg-stone-200 rounded-md transition-all disabled:opacity-50"
+              title="放大文字"
+            >
+              A+
+            </button>
+          </div>
+
+          {/* Speed Controls */}
+          <div className="flex items-center gap-2 bg-stone-100 p-1.5 rounded-lg border border-stone-200">
+            <Settings2 className="w-4 h-4 text-stone-400 ml-2" />
+            <div className="w-px h-4 bg-stone-300 mx-1"></div>
+            {speedOptions.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleSpeedChange(s)}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-all ${
+                  speed === s 
+                    ? 'bg-white text-amber-700 shadow-sm' 
+                    : 'text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -213,7 +240,8 @@ export default function App() {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="請在此貼上或輸入您想要朗讀的文字...（點擊文字任意處放置游標，朗讀將從該處開始）"
-                    className="flex-1 w-full p-6 sm:p-10 text-lg sm:text-xl leading-relaxed text-stone-700 bg-transparent resize-none focus:outline-none placeholder:text-stone-300"
+                    style={{ fontSize: `${fontSize}rem` }}
+                    className="flex-1 w-full p-6 sm:p-10 leading-relaxed text-stone-700 bg-transparent resize-none focus:outline-none placeholder:text-stone-300"
                   />
                 </motion.div>
               ) : (
@@ -224,7 +252,10 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                   className="absolute inset-0 overflow-y-auto p-6 sm:p-10"
                 >
-                  <div className="text-xl sm:text-2xl leading-loose text-stone-600 whitespace-pre-wrap font-medium select-none">
+                  <div 
+                    className="leading-loose text-stone-600 whitespace-pre-wrap font-medium select-none transition-all duration-200"
+                    style={{ fontSize: `${fontSize}rem` }}
+                  >
                     {text.split('').map((char, index) => {
                       const isHighlighted = index >= currentIndex && index < currentIndex + Math.max(currentLength, 1);
                       return (
@@ -250,21 +281,32 @@ export default function App() {
           {/* Bottom Toolbar */}
           <div className="p-4 sm:p-6 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center justify-between gap-4 shrink-0">
             
-            {/* Mobile Speed Controls */}
-            <div className="flex sm:hidden items-center gap-1 bg-white p-1 rounded-lg border border-stone-200">
-              {speedOptions.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => handleSpeedChange(s)}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                    speed === s 
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200/50' 
-                      : 'text-stone-600 hover:bg-stone-100'
-                  }`}
-                >
-                  {s}x
-                </button>
-              ))}
+            {/* Mobile Controls */}
+            <div className="flex sm:hidden w-full flex-col gap-3">
+              <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-stone-200 justify-between">
+                 {/* Mobile Zoom */}
+                <div className="flex items-center gap-1">
+                  <button onClick={handleZoomOut} disabled={fontSize <= 0.875} className="px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-md disabled:opacity-50">A-</button>
+                  <button onClick={handleZoomIn} disabled={fontSize >= 3} className="px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-md disabled:opacity-50">A+</button>
+                </div>
+                <div className="w-px h-4 bg-stone-200 mx-1"></div>
+                {/* Mobile Speed */}
+                <div className="flex items-center gap-1">
+                  {speedOptions.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleSpeedChange(s)}
+                      className={`px-2 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        speed === s 
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200/50' 
+                          : 'text-stone-600 hover:bg-stone-100'
+                      }`}
+                    >
+                      {s}x
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Voice Info */}
