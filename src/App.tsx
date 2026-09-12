@@ -163,7 +163,7 @@ export default function App() {
     setCurrentLength(0);
   };
 
-  const speedOptions = [0.25, 0.5, 0.75, 1, 1.5, 2, 3];
+  const speedOptions = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 5, 7];
 
   const handleSpeedChange = (newSpeed: number) => {
     setSpeed(newSpeed);
