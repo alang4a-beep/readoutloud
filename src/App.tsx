@@ -14,6 +14,24 @@ export default function App() {
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeCharRef = useRef<HTMLSpanElement>(null);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (isPlaying && !isPaused && activeCharRef.current && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const element = activeCharRef.current;
+      
+      // Calculate target scroll position (roughly 30% from the top)
+      const targetScroll = element.offsetTop - (container.clientHeight * 0.3);
+      
+      container.scrollTo({
+        top: Math.max(0, targetScroll),
+        behavior: 'smooth'
+      });
+    }
+  }, [currentIndex, isPlaying, isPaused]);
 
   // Chrome ~15s TTS pause bug workaround
   const keepAliveInterval = useRef<number | null>(null);
@@ -247,10 +265,11 @@ export default function App() {
               ) : (
                 <motion.div
                   key="read"
+                  ref={scrollContainerRef as any}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute inset-0 overflow-y-auto p-6 sm:p-10"
+                  className="absolute inset-0 overflow-y-auto p-6 sm:p-10 scroll-smooth"
                 >
                   <div 
                     className="leading-loose text-stone-600 whitespace-pre-wrap font-medium select-none transition-all duration-200"
@@ -261,6 +280,7 @@ export default function App() {
                       return (
                         <span
                           key={index}
+                          ref={isHighlighted ? activeCharRef : null}
                           onClick={() => handleJumpTo(index)}
                           className={`cursor-pointer transition-colors duration-100 ${
                             isHighlighted
